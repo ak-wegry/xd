@@ -5,12 +5,7 @@
 # [変更履歴]
 # Ver0.00  2021/05/22 作成開始
 # Ver1.00  2021/05/29 新規作成
-
-usage = """
-xd.py - ファイルの16進数表示  [Ver1.00  2021/5/29]
-
-Usage : xd.py filename
-"""
+# Ver1.01  2023/11/25 標準入力からのデータ取得不具合修正
 
 import os
 import sys
@@ -19,6 +14,12 @@ import math
 import chardet
 import locale
 import re
+
+usage = """
+xd.py - ファイルの16進数表示  [Ver1.01  2023/11/25]
+
+Usage : xd.py filename
+"""
 
 def chk_range(chk_val, range_list):
 	"""
@@ -40,6 +41,7 @@ def chk_range(chk_val, range_list):
 			stat = True
 			break
 	return stat
+
 
 def get_dsp_txt(bin, start, byte_max, in_enc):
 	"""
@@ -143,6 +145,7 @@ def get_dsp_txt(bin, start, byte_max, in_enc):
 	return [ext_txt, str(byte_cnt)]
 get_dsp_txt.jis_esc = b""	# JISのESCシーケンス(静的変数)初期化
 
+
 #--- main ----------------------------------------------------------------------
 ## 引数チェック
 if len(sys.argv) == 2:
@@ -152,18 +155,17 @@ if len(sys.argv) == 2:
 		txt = f.read()
 else:
 	if sys.stdin.isatty():
-		print(usage)
+		print(usage, end="")
 		sys.exit(0)
 	else:
 		# stdinからの入力
-		file_name = sys.stdin
-		txt = bytes(file_name.read(), file_name.encoding)
+		txt = sys.stdin.buffer.read()
 
 ## 入力文字列のエンコーディング判定
 def_enc = locale.getpreferredencoding()
 guess = chardet.detect(txt).get("encoding")
 if guess is None:
-	guess = locale.getpreferredencoding()
+	guess = def_enc
 elif guess == "ISO-2022-JP":
 	# JIS7限定の特殊処理
 	guess = "ISO-2022-JP-EXT"
